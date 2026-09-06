@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  settings  Json?
+  createdAt DateTime @default(now())
+
+  users             User[]
+  orgVendors        OrganizationVendor[]
+  rfqs              RFQ[]
+  purchaseOrders    PurchaseOrder[]
+  invoices          Invoice[]
+  payments          Payment[]
+  approvalTemplates ApprovalChainTemplate[]
+  approvalInstances ApprovalInstance[]
+}
+
+enum UserRole {
+  BUYER
+  APPROVER
+  FINANCE_ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  email          String
+  passwordHash   String
+  role           UserRole
+  department     String?
+  createdAt      DateTime     @default(now())
+
+  createdRFQs   RFQ[]           @relation("RFQCreator")
+  createdPOs    PurchaseOrder[] @relation("POCreator")
+  approvalSteps ApprovalStep[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+}
+
+model Vendor {
+  id                String   @id @default(cuid())
+  name              String
+  contactEmail      String
+  razorpayAccountId String?
+  createdAt         DateTime @default(now())
+
+  orgLinks       OrganizationVendor[]
+  rfqInvites     RFQVendorInvite[]
+  quotes         Quote[]
+  purchaseOrders PurchaseOrder[]
+  invoices       Invoice[]
+  payments       Payment[]
+}
+
+enum VendorStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+model OrganizationVendor {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  vendor         Vendor       @relation(fields: [vendorId], references: [id])
+  vendorId       String
+  status         VendorStatus @default(PENDING_VERIFICATION)
+  internalNotes  String?
+  scorecard      Json?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, vendorId])
+  @@index([organizationId])
+}
+
+enum RFQStatus {
+  DRAFT
+  SENT
+  CLOSED
+  AWARDED
+}
+
+model RFQ {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  organizationId  String
+  createdBy       User         @relation("RFQCreator", fields: [createdByUserId], references: [id])
+  createdByUserId String
+  title           String
+  description     String?
+  status          RFQStatus    @default(DRAFT)
+  dueDate         DateTime?
+  createdAt       DateTime     @default(now())
+
+  vendorInvites  RFQVendorInvite[]
+  quotes         Quote[]
+  purchaseOrders PurchaseOrder[]
+
+  @@index([organizationId, status])
+}
+
+model RFQVendorInvite {
+  id          String    @id @default(cuid())
+  rfq         RFQ       @relation(fields: [rfqId], references: [id])
+  rfqId       String
+  vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  vendorId    String
+  invitedAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@unique([rfqId, vendorId])
+}
+
+enum QuoteStatus {
+  SUBMITTED
+  SELECTED
+  REJECTED
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  rfq         RFQ         @relation(fields: [rfqId], references: [id])
+  rfqId       String
+  vendor      Vendor      @relation(fields: [vendorId], references: [id])
+  vendorId    String
+  amount      Decimal
+  notes       String?
+  status      QuoteStatus @default(SUBMITTED)
+  submittedAt DateTime    @default(now())
+
+  lineItems QuoteLineItem[]
+
+  @@index([rfqId])
+}
+
+model QuoteLineItem {
+  id          String  @id @default(cuid())
+  quote       Quote   @relation(fields: [quoteId], references: [id])
+  quoteId     String
+  description String
+  quantity    Int
+  unitPrice   Decimal
+  total       Decimal
+}
+
+enum POStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+model PurchaseOrder {
+  id              String   @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  organizationId  String
+  rfq             RFQ?     @relation(fields: [rfqId], references: [id])
+  rfqId           String?
+  vendor          Vendor   @relation(fields: [vendorId], references: [id])
+  vendorId        String
+  createdBy       User     @relation("POCreator", fields: [createdByUserId], references: [id])
+  createdByUserId String
+  status          POStatus @default(PENDING_APPROVAL)
+  totalAmount     Decimal
+  createdAt       DateTime @default(now())
+
+  lineItems         POLineItem[]
+  invoices          Invoice[]
+  approvalInstances ApprovalInstance[]
+
+  @@index([organizationId, status])
+}
+
+model POLineItem {
+  id              String        @id @default(cuid())
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId String
+  description     String
+  quantity        Int
+  unitPrice       Decimal
+  total           Decimal
+}
+
+model ApprovalChainTemplate {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  name           String
+  department     String?
+  createdAt      DateTime     @default(now())
+
+  steps     ApprovalChainStepDef[]
+  instances ApprovalInstance[]
+
+  @@index([organizationId, department])
+}
+
+model ApprovalChainStepDef {
+  id             String                @id @default(cuid())
+  template       ApprovalChainTemplate @relation(fields: [templateId], references: [id])
+  templateId     String
+  sequenceOrder  Int
+  approverRole   UserRole?
+  approverUserId String?
+  minAmount      Decimal?
+  maxAmount      Decimal?
+
+  @@index([templateId, sequenceOrder])
+}
+
+enum ApprovalInstanceStatus {
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+model ApprovalInstance {
+  id             String                @id @default(cuid())
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+  organizationId String
+  template       ApprovalChainTemplate @relation(fields: [templateId], references: [id])
+  templateId     String
+
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId String?
+  invoice         Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoiceId       String?
+
+  status           ApprovalInstanceStatus @default(IN_PROGRESS)
+  currentStepOrder Int                    @default(1)
+  createdAt        DateTime               @default(now())
+
+  steps ApprovalStep[]
+
+  @@index([organizationId, status])
+}
+
+enum ApprovalStepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+model ApprovalStep {
+  id                  String             @id @default(cuid())
+  approvalInstance    ApprovalInstance   @relation(fields: [approvalInstanceId], references: [id])
+  approvalInstanceId  String
+  sequenceOrder       Int
+  assignedApprover    User               @relation(fields: [assignedApproverId], references: [id])
+  assignedApproverId  String
+  status              ApprovalStepStatus @default(PENDING)
+  comment             String?
+  decidedAt           DateTime?
+
+  @@index([approvalInstanceId, sequenceOrder])
+}
+
+enum InvoiceStatus {
+  SUBMITTED
+  APPROVED
+  PAYMENT_RELEASED
+  PAID
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  organizationId  String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId String
+  vendor          Vendor        @relation(fields: [vendorId], references: [id])
+  vendorId        String
+  amount          Decimal
+  status          InvoiceStatus @default(SUBMITTED)
+  submittedAt     DateTime      @default(now())
+
+  approvalInstances ApprovalInstance[]
+  payment           Payment?
+
+  @@index([organizationId, status])
+}
+
+enum PaymentStatus {
+  INITIATED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  organization       Organization  @relation(fields: [organizationId], references: [id])
+  organizationId     String
+  invoice            Invoice       @relation(fields: [invoiceId], references: [id])
+  invoiceId          String        @unique
+  vendor             Vendor        @relation(fields: [vendorId], references: [id])
+  vendorId           String
+  razorpayTransferId String?       @unique
+  amount             Decimal
+  platformCommission Decimal?
+  status             PaymentStatus @default(INITIATED)
+  webhookConfirmedAt DateTime?
+  createdAt          DateTime      @default(now())
+
+  @@index([organizationId, status])
+}
