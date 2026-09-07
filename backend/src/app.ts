@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { authRouter } from "./modules/auth/auth.routes";
+import { vendorRouter } from "./modules/vendors/vendor.routes";
+import { quoteRouter } from "./modules/quotes/quote.routes";
+import { rfqRouter } from "./modules/rfqs/rfq.routes";
 
 export function createApp() {
   const app = express();
@@ -15,6 +18,9 @@ export function createApp() {
   });
 
   app.use("/api/auth", authRouter);
+  app.use("/api/vendors", vendorRouter);
+  app.use("/api/rfqs", rfqRouter);
+  app.use("/api/rfqs/:rfqId/quotes", quoteRouter);
 
   return app;
 }
