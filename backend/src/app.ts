@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { authRouter } from "./modules/auth/auth.routes";
 
 export function createApp() {
   const app = express();
@@ -13,7 +14,7 @@ export function createApp() {
     res.json({ status: "ok" });
   });
 
-  // feature routes will be mounted here in later phases
+  app.use("/api/auth", authRouter);
 
   return app;
 }
