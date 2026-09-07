@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -19,9 +19,23 @@ export default function DashboardPage() {
           Log out
         </button>
       </div>
-      <p className="text-slate-500">
-        You're logged in. This is a placeholder — we'll build the real dashboard in a later phase.
-      </p>
+
+      <div className="flex gap-4">
+        <Link
+          to="/vendors"
+          className="bg-white rounded-xl border border-slate-200 p-5 hover:border-accent-400 transition-colors"
+        >
+          <p className="font-medium text-slate-900">Vendors</p>
+          <p className="text-sm text-slate-500">Manage your vendor list</p>
+        </Link>
+        <Link
+          to="/rfqs"
+          className="bg-white rounded-xl border border-slate-200 p-5 hover:border-accent-400 transition-colors"
+        >
+          <p className="font-medium text-slate-900">RFQs</p>
+          <p className="text-sm text-slate-500">Requests for quote</p>
+        </Link>
+      </div>
     </div>
   );
 }
