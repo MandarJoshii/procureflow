@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { authRouter } from "./modules/auth/auth.routes";
 import { vendorRouter } from "./modules/vendors/vendor.routes";
 import { quoteRouter } from "./modules/quotes/quote.routes";
+import { approvalRouter } from "./modules/approvals/approval.routes";
+import { poRouter } from "./modules/purchase-orders/po.routes";
 import { rfqRouter } from "./modules/rfqs/rfq.routes";
 
 export function createApp() {
@@ -21,6 +23,8 @@ export function createApp() {
   app.use("/api/vendors", vendorRouter);
   app.use("/api/rfqs", rfqRouter);
   app.use("/api/rfqs/:rfqId/quotes", quoteRouter);
+  app.use("/api/approvals", approvalRouter);
+  app.use("/api/purchase-orders", poRouter);
 
   return app;
 }
