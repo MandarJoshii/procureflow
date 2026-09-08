@@ -9,6 +9,7 @@ import { poRouter } from "./modules/purchase-orders/po.routes";
 import { invoiceRouter } from "./modules/invoices/invoice.routes";
 import { rfqRouter } from "./modules/rfqs/rfq.routes";
 import { paymentRouter } from "./modules/payments/payment.routes";
+import { analyticsRouter } from "./modules/analytics/analytics.routes";
 
 export function createApp() {
   const app = express();
@@ -29,6 +30,7 @@ export function createApp() {
   app.use("/api/purchase-orders", poRouter);
   app.use("/api/invoices", invoiceRouter);
   app.use("/api/payments", paymentRouter);
+  app.use("/api/analytics", analyticsRouter);
 
   return app;
 }
