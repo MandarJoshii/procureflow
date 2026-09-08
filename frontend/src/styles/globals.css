@@ -13,6 +13,11 @@
   --color-status-approved: #10b981;
   --color-status-rejected: #ef4444;
   --color-status-progress: #3b82f6;
+
+  --color-ink: #0b0d12;
+  --color-surface: #12151c;
+  --color-text: #f4f3ef;
+  --color-text-soft: #9ca0ac;
 }
 
 body {

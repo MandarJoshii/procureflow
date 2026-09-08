@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../../lib/api-client";
+import AppShell from "../../../app/components/AppShell";
+import { Card, Badge, PrimaryButton, TextInput, Label, EmptyState } from "../../../app/components/ui";
 
 interface Vendor {
   id: string;
@@ -59,90 +61,64 @@ export default function VendorListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Vendors</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors"
-          >
-            {showForm ? "Cancel" : "+ Add Vendor"}
-          </button>
-        </div>
+    <AppShell>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-medium text-white/90">Vendors</h1>
+        <PrimaryButton onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "+ Add Vendor"}
+        </PrimaryButton>
+      </div>
 
-        {showForm && (
-          <form
-            onSubmit={handleAddVendor}
-            className="bg-white rounded-xl border border-slate-200 p-5 mb-6 space-y-3"
-          >
+      {showForm && (
+        <Card className="p-5 mb-6">
+          <form onSubmit={handleAddVendor} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Vendor name
-              </label>
-              <input
+              <Label>Vendor name</Label>
+              <TextInput
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                 placeholder="Acme Supplies"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Contact email
-              </label>
-              <input
+              <Label>Contact email</Label>
+              <TextInput
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                 placeholder="contact@vendor.com"
               />
             </div>
-            {error && <p className="text-sm text-status-rejected">{error}</p>}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors disabled:opacity-50"
-            >
+            {error && <p className="text-sm text-rose-400">{error}</p>}
+            <PrimaryButton type="submit" disabled={submitting}>
               {submitting ? "Adding..." : "Add Vendor"}
-            </button>
+            </PrimaryButton>
           </form>
-        )}
+        </Card>
+      )}
 
-        {loading ? (
-          <p className="text-slate-500 text-sm">Loading vendors...</p>
-        ) : vendors.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-500 text-sm">
-              No vendors yet. Add your first vendor to start creating RFQs.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
+      {loading ? (
+        <p className="text-white/35 text-sm">Loading vendors...</p>
+      ) : vendors.length === 0 ? (
+        <EmptyState>No vendors yet. Add your first vendor to start creating RFQs.</EmptyState>
+      ) : (
+        <Card>
+          <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
             {vendors.map((v) => (
-              <div key={v.id} className="p-4 flex items-center justify-between">
+              <div key={v.id} className="px-5 py-4 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-slate-900">{v.vendor.name}</p>
-                  <p className="text-sm text-slate-500">{v.vendor.contactEmail}</p>
+                  <p className="font-medium text-white/90">{v.vendor.name}</p>
+                  <p className="text-sm text-white/40">{v.vendor.contactEmail}</p>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    v.status === "ACTIVE"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-amber-50 text-amber-700"
-                  }`}
-                >
-                  {v.status.replace("_", " ")}
-                </span>
+                <Badge status={v.status} />
               </div>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+        </Card>
+      )}
+    </AppShell>
   );
 }

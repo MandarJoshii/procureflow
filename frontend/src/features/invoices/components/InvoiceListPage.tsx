@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../../lib/api-client";
+import AppShell from "../../../app/components/AppShell";
+import { Card, Badge, PrimaryButton, Label, EmptyState } from "../../../app/components/ui";
 
 interface Vendor {
   id: string;
@@ -83,37 +85,26 @@ export default function InvoiceListPage() {
     }
   }
 
-  const statusStyles: Record<string, string> = {
-    SUBMITTED: "bg-slate-100 text-slate-600",
-    APPROVED: "bg-blue-50 text-blue-700",
-    PAYMENT_RELEASED: "bg-amber-50 text-amber-700",
-    PAID: "bg-emerald-50 text-emerald-700",
-  };
+  const selectClass =
+    "w-full rounded-lg px-3.5 py-2.5 text-sm outline-none text-white/90 transition-colors focus:border-indigo-400";
+  const selectStyle = { backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors"
-          >
-            {showForm ? "Cancel" : "+ Submit Invoice"}
-          </button>
-        </div>
+    <AppShell>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-medium text-white/90">Invoices</h1>
+        <PrimaryButton onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "+ Submit Invoice"}
+        </PrimaryButton>
+      </div>
 
-        {showForm && (
-          <form
-            onSubmit={handleCreateInvoice}
-            className="bg-white rounded-xl border border-slate-200 p-5 mb-6 space-y-3"
-          >
+      {showForm && (
+        <Card className="p-5 mb-6">
+          <form onSubmit={handleCreateInvoice} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Purchase Order
-              </label>
+              <Label>Purchase Order</Label>
               {approvedPOs.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-white/40">
                   No approved Purchase Orders available to invoice against.
                 </p>
               ) : (
@@ -121,11 +112,14 @@ export default function InvoiceListPage() {
                   value={selectedPOId}
                   onChange={(e) => setSelectedPOId(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className={selectClass}
+                  style={selectStyle}
                 >
-                  <option value="">Select a Purchase Order</option>
+                  <option value="" className="bg-slate-900">
+                    Select a Purchase Order
+                  </option>
                   {approvedPOs.map((po) => (
-                    <option key={po.id} value={po.id}>
+                    <option key={po.id} value={po.id} className="bg-slate-900">
                       PO {po.id.slice(-8)} — ₹{Number(po.totalAmount).toLocaleString("en-IN")}
                     </option>
                   ))}
@@ -134,64 +128,53 @@ export default function InvoiceListPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Invoice Amount
-              </label>
+              <Label>Invoice Amount</Label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
                 min={0}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className={selectClass}
+                style={selectStyle}
                 placeholder="1100000"
               />
             </div>
 
-            {error && <p className="text-sm text-status-rejected">{error}</p>}
+            {error && <p className="text-sm text-rose-400">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={submitting || approvedPOs.length === 0}
-              className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors disabled:opacity-50"
-            >
+            <PrimaryButton type="submit" disabled={submitting || approvedPOs.length === 0}>
               {submitting ? "Submitting..." : "Submit Invoice"}
-            </button>
+            </PrimaryButton>
           </form>
-        )}
+        </Card>
+      )}
 
-        {loading ? (
-          <p className="text-slate-500 text-sm">Loading invoices...</p>
-        ) : invoices.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-500 text-sm">
-              No invoices yet. Submit one against an approved Purchase Order.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
+      {loading ? (
+        <p className="text-white/35 text-sm">Loading invoices...</p>
+      ) : invoices.length === 0 ? (
+        <EmptyState>No invoices yet. Submit one against an approved Purchase Order.</EmptyState>
+      ) : (
+        <Card>
+          <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
             {invoices.map((invoice) => (
               <Link
                 key={invoice.id}
                 to={`/invoices/${invoice.id}`}
-                className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="px-5 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{invoice.vendor.name}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-white/90">{invoice.vendor.name}</p>
+                  <p className="font-mono text-sm text-white/40">
                     ₹{Number(invoice.amount).toLocaleString("en-IN")}
                   </p>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyles[invoice.status]}`}
-                >
-                  {invoice.status.replace("_", " ")}
-                </span>
+                <Badge status={invoice.status} />
               </Link>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+        </Card>
+      )}
+    </AppShell>
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../../lib/api-client";
+import AppShell from "../../../app/components/AppShell";
+import { Card, Badge, PrimaryButton, TextInput, TextArea, Label, EmptyState } from "../../../app/components/ui";
 
 interface Vendor {
   id: string;
@@ -56,9 +58,7 @@ export default function RFQListPage() {
 
   function toggleVendor(vendorId: string) {
     setSelectedVendorIds((prev) =>
-      prev.includes(vendorId)
-        ? prev.filter((id) => id !== vendorId)
-        : [...prev, vendorId]
+      prev.includes(vendorId) ? prev.filter((id) => id !== vendorId) : [...prev, vendorId]
     );
   }
 
@@ -73,11 +73,7 @@ export default function RFQListPage() {
 
     setSubmitting(true);
     try {
-      await apiClient.post("/api/rfqs", {
-        title,
-        description,
-        vendorIds: selectedVendorIds,
-      });
+      await apiClient.post("/api/rfqs", { title, description, vendorIds: selectedVendorIds });
       setTitle("");
       setDescription("");
       setSelectedVendorIds([]);
@@ -90,66 +86,45 @@ export default function RFQListPage() {
     }
   }
 
-  const statusStyles: Record<string, string> = {
-    DRAFT: "bg-slate-100 text-slate-600",
-    SENT: "bg-blue-50 text-blue-700",
-    CLOSED: "bg-slate-100 text-slate-600",
-    AWARDED: "bg-emerald-50 text-emerald-700",
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">RFQs</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors"
-          >
-            {showForm ? "Cancel" : "+ New RFQ"}
-          </button>
-        </div>
+    <AppShell>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-medium text-white/90">RFQs</h1>
+        <PrimaryButton onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "+ New RFQ"}
+        </PrimaryButton>
+      </div>
 
-        {showForm && (
-          <form
-            onSubmit={handleCreateRFQ}
-            className="bg-white rounded-xl border border-slate-200 p-5 mb-6 space-y-4"
-          >
+      {showForm && (
+        <Card className="p-5 mb-6">
+          <form onSubmit={handleCreateRFQ} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Title
-              </label>
-              <input
+              <Label>Title</Label>
+              <TextInput
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                 placeholder="Office Laptops Q1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description
-              </label>
-              <textarea
+              <Label>Description</Label>
+              <TextArea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                 placeholder="What do you need?"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Invite vendors
-              </label>
+              <Label>Invite vendors</Label>
               {vendors.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-white/40">
                   No vendors yet.{" "}
-                  <Link to="/vendors" className="text-accent-600 hover:underline">
+                  <Link to="/vendors" className="text-indigo-400 hover:underline">
                     Add one first
                   </Link>
                   .
@@ -157,15 +132,12 @@ export default function RFQListPage() {
               ) : (
                 <div className="space-y-2">
                   {vendors.map((v) => (
-                    <label
-                      key={v.vendor.id}
-                      className="flex items-center gap-2 text-sm text-slate-700"
-                    >
+                    <label key={v.vendor.id} className="flex items-center gap-2 text-sm text-white/70">
                       <input
                         type="checkbox"
                         checked={selectedVendorIds.includes(v.vendor.id)}
                         onChange={() => toggleVendor(v.vendor.id)}
-                        className="rounded border-slate-300 text-accent-600 focus:ring-accent-500"
+                        className="rounded border-white/20 text-indigo-500 focus:ring-indigo-500"
                       />
                       {v.vendor.name}
                     </label>
@@ -174,50 +146,40 @@ export default function RFQListPage() {
               )}
             </div>
 
-            {error && <p className="text-sm text-status-rejected">{error}</p>}
+            {error && <p className="text-sm text-rose-400">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors disabled:opacity-50"
-            >
+            <PrimaryButton type="submit" disabled={submitting}>
               {submitting ? "Creating..." : "Create RFQ"}
-            </button>
+            </PrimaryButton>
           </form>
-        )}
+        </Card>
+      )}
 
-        {loading ? (
-          <p className="text-slate-500 text-sm">Loading RFQs...</p>
-        ) : rfqs.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-500 text-sm">
-              No RFQs yet. Create one to start requesting quotes from vendors.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
+      {loading ? (
+        <p className="text-white/35 text-sm">Loading RFQs...</p>
+      ) : rfqs.length === 0 ? (
+        <EmptyState>No RFQs yet. Create one to start requesting quotes from vendors.</EmptyState>
+      ) : (
+        <Card>
+          <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
             {rfqs.map((rfq) => (
               <Link
                 key={rfq.id}
                 to={`/rfqs/${rfq.id}`}
-                className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="px-5 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{rfq.title}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-white/90">{rfq.title}</p>
+                  <p className="text-sm text-white/40">
                     {rfq.vendorInvites.length} vendor(s) invited · {rfq.quotes.length} quote(s)
                   </p>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyles[rfq.status]}`}
-                >
-                  {rfq.status}
-                </span>
+                <Badge status={rfq.status} />
               </Link>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+        </Card>
+      )}
+    </AppShell>
   );
 }

@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./features/auth/components/LoginPage";
-import SignupPage from "./features/auth/components/SignupPage";
+import AuthPage from "./features/auth/components/AuthPage";
 import DashboardPage from "./features/dashboard/DashboardPage";
 import VendorListPage from "./features/vendors/components/VendorListPage";
 import RFQListPage from "./features/rfqs/components/RFQListPage";
@@ -15,8 +14,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/signup" element={<AuthPage />} />
         <Route
           path="/dashboard"
           element={
