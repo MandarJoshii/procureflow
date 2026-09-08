@@ -13,4 +13,6 @@ export const env = {
   JWT_SECRET: required("JWT_SECRET"),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? "15m",
   NODE_ENV: process.env.NODE_ENV ?? "development",
+  RAZORPAY_KEY_ID: required("RAZORPAY_KEY_ID"),
+  RAZORPAY_KEY_SECRET: required("RAZORPAY_KEY_SECRET"),
 };

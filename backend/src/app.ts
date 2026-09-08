@@ -8,6 +8,7 @@ import { approvalRouter } from "./modules/approvals/approval.routes";
 import { poRouter } from "./modules/purchase-orders/po.routes";
 import { invoiceRouter } from "./modules/invoices/invoice.routes";
 import { rfqRouter } from "./modules/rfqs/rfq.routes";
+import { paymentRouter } from "./modules/payments/payment.routes";
 
 export function createApp() {
   const app = express();
@@ -27,6 +28,7 @@ export function createApp() {
   app.use("/api/approvals", approvalRouter);
   app.use("/api/purchase-orders", poRouter);
   app.use("/api/invoices", invoiceRouter);
+  app.use("/api/payments", paymentRouter);
 
   return app;
 }
