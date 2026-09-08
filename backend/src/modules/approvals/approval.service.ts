@@ -43,7 +43,7 @@ export async function getOrCreateDefaultTemplate(organizationId: string) {
  * SUPER_ADMIN if no one with the exact role exists yet (keeps the demo
  * usable with just one user).
  */
-async function resolveApproverForStep(
+export async function resolveApproverForStep(
   organizationId: string,
   stepDef: { approverRole: UserRole | null; approverUserId: string | null }
 ) {
@@ -69,12 +69,13 @@ async function resolveApproverForStep(
 }
 
 /**
- * Creates a new ApprovalInstance for a Purchase Order, using the org's
- * default template, and creates the first ApprovalStep as PENDING.
+ * Generic function that starts an approval instance anchored to either a
+ * Purchase Order or an Invoice (never both). Used by both the PO and
+ * Invoice modules to avoid duplicating this logic.
  */
-export async function startApprovalForPurchaseOrder(
+export async function startApprovalInstance(
   organizationId: string,
-  purchaseOrderId: string
+  anchor: { purchaseOrderId?: string; invoiceId?: string }
 ) {
   const template = await getOrCreateDefaultTemplate(organizationId);
 
@@ -82,7 +83,8 @@ export async function startApprovalForPurchaseOrder(
     data: {
       organizationId,
       templateId: template.id,
-      purchaseOrderId,
+      purchaseOrderId: anchor.purchaseOrderId,
+      invoiceId: anchor.invoiceId,
       status: "IN_PROGRESS",
       currentStepOrder: 1,
     },
@@ -101,6 +103,17 @@ export async function startApprovalForPurchaseOrder(
   });
 
   return instance;
+}
+
+/**
+ * Kept for backwards compatibility with existing calls — creates an
+ * approval instance anchored specifically to a Purchase Order.
+ */
+export async function startApprovalForPurchaseOrder(
+  organizationId: string,
+  purchaseOrderId: string
+) {
+  return startApprovalInstance(organizationId, { purchaseOrderId });
 }
 
 /**
@@ -160,7 +173,7 @@ export async function decideApprovalStep(
     },
   });
 
-   if (decision === "REJECTED") {
+  if (decision === "REJECTED") {
     const rejected = await prisma.approvalInstance.update({
       where: { id: instance.id },
       data: { status: "REJECTED" },
@@ -171,6 +184,11 @@ export async function decideApprovalStep(
       await syncPOStatusWithApproval(instance.purchaseOrderId, "REJECTED");
     }
 
+    if (instance.invoiceId) {
+      const { syncInvoiceStatusWithApproval } = await import("../invoices/invoice.service");
+      await syncInvoiceStatusWithApproval(instance.invoiceId, "REJECTED");
+    }
+
     return rejected;
   }
 
@@ -179,7 +197,7 @@ export async function decideApprovalStep(
     (s) => s.sequenceOrder === instance.currentStepOrder + 1
   );
 
-    if (!nextStepDef) {
+  if (!nextStepDef) {
     // no more steps — the whole chain is approved
     const approved = await prisma.approvalInstance.update({
       where: { id: instance.id },
@@ -189,6 +207,11 @@ export async function decideApprovalStep(
     if (instance.purchaseOrderId) {
       const { syncPOStatusWithApproval } = await import("../purchase-orders/po.service");
       await syncPOStatusWithApproval(instance.purchaseOrderId, "APPROVED");
+    }
+
+    if (instance.invoiceId) {
+      const { syncInvoiceStatusWithApproval } = await import("../invoices/invoice.service");
+      await syncInvoiceStatusWithApproval(instance.invoiceId, "APPROVED");
     }
 
     return approved;
