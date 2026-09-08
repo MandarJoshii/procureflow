@@ -6,6 +6,8 @@ import VendorListPage from "./features/vendors/components/VendorListPage";
 import RFQListPage from "./features/rfqs/components/RFQListPage";
 import RFQDetailPage from "./features/rfqs/components/RFQDetailPage";
 import PODetailPage from "./features/purchase-orders/components/PODetailPage";
+import InvoiceListPage from "./features/invoices/components/InvoiceListPage";
+import InvoiceDetailPage from "./features/invoices/components/InvoiceDetailPage";
 import ProtectedRoute from "./app/ProtectedRoute";
 
 function App() {
@@ -52,6 +54,22 @@ function App() {
           element={
             <ProtectedRoute>
               <PODetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute>
+              <InvoiceListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invoices/:id"
+          element={
+            <ProtectedRoute>
+              <InvoiceDetailPage />
             </ProtectedRoute>
           }
         />
