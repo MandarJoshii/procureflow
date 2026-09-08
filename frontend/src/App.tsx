@@ -5,6 +5,7 @@ import DashboardPage from "./features/dashboard/DashboardPage";
 import VendorListPage from "./features/vendors/components/VendorListPage";
 import RFQListPage from "./features/rfqs/components/RFQListPage";
 import RFQDetailPage from "./features/rfqs/components/RFQDetailPage";
+import PODetailPage from "./features/purchase-orders/components/PODetailPage";
 import ProtectedRoute from "./app/ProtectedRoute";
 
 function App() {
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute>
               <RFQDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/purchase-orders/:id"
+          element={
+            <ProtectedRoute>
+              <PODetailPage />
             </ProtectedRoute>
           }
         />

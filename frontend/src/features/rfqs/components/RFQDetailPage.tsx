@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiClient } from "../../../lib/api-client";
 
 interface Vendor {
@@ -48,6 +48,8 @@ interface LineItemDraft {
 
 export default function RFQDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [generatingPO, setGeneratingPO] = useState(false);
   const [rfq, setRfq] = useState<RFQDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [quoteFormVendorId, setQuoteFormVendorId] = useState<string | null>(null);
@@ -129,6 +131,23 @@ export default function RFQDetailPage() {
     }
   }
 
+  async function handleGeneratePO() {
+    const selectedQuote = rfq?.quotes.find((q) => q.status === "SELECTED");
+    if (!selectedQuote || !id) return;
+
+    setGeneratingPO(true);
+    try {
+      const response = await apiClient.post("/api/purchase-orders", {
+        rfqId: id,
+        quoteId: selectedQuote.id,
+      });
+      navigate(`/purchase-orders/${response.data.id}`);
+    } catch (err) {
+      console.error("Failed to generate PO:", err);
+      setGeneratingPO(false);
+    }
+  }
+
   if (loading) {
     return <div className="min-h-screen bg-slate-50 p-8 text-slate-500 text-sm">Loading...</div>;
   }
@@ -163,7 +182,19 @@ export default function RFQDetailPage() {
           </span>
         </div>
         {rfq.description && (
-          <p className="text-slate-500 text-sm mb-8">{rfq.description}</p>
+          <p className="text-slate-500 text-sm mb-4">{rfq.description}</p>
+        )}
+
+        {isAwarded && (
+          <div className="mb-8">
+            <button
+              onClick={handleGeneratePO}
+              disabled={generatingPO}
+              className="rounded-lg bg-accent-600 text-white text-sm font-medium px-4 py-2 hover:bg-accent-700 transition-colors disabled:opacity-50"
+            >
+              {generatingPO ? "Generating..." : "Generate Purchase Order"}
+            </button>
+          </div>
         )}
 
         {/* Invited vendors */}
