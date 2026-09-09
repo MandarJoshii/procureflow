@@ -1,18 +1,6 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode } from "react";
 import { motion } from "framer-motion";
 import AuthScene from "./AuthScene";
-
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const handler = () => setReduced(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduced;
-}
 
 export default function AuthShell({
   mode,
@@ -21,8 +9,6 @@ export default function AuthShell({
   mode: "login" | "signup";
   children: ReactNode;
 }) {
-  const reduced = useReducedMotion();
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#07080c] flex flex-col items-center justify-center px-6 py-14">
       {/* 3D core — desktop only, disabled entirely under reduced motion for a static fallback */}
